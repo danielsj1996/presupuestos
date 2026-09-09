@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: obra-clara-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: obra_clara
+      POSTGRES_USER: obra_clara_app
+      POSTGRES_PASSWORD: obra_clara_dev
+    ports:
+      - "55432:5432"
+    volumes:
+      - obra_clara_postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U obra_clara_app -d obra_clara"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  obra_clara_postgres_data:
