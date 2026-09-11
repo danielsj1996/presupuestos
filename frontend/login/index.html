@@ -48,18 +48,6 @@
             </button>
           </div>
         </form>
-
-        <div class="login-presets">
-          <p>Accesos directos de prueba:</p>
-          <div class="preset-buttons">
-            <button class="preset-btn" type="button" data-user="admin" data-pass="admin">
-              👑 Entrar como Administrador
-            </button>
-            <button class="preset-btn" type="button" data-user="usuario" data-pass="123">
-              👷 Entrar como Usuario Común
-            </button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -92,14 +80,6 @@
         errorBox.textContent = err.message;
         errorBox.style.display = 'block';
       }
-    });
-
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        userInput.value = btn.dataset.user;
-        passInput.value = btn.dataset.pass;
-        form.dispatchEvent(new Event('submit'));
-      });
     });
   </script>
 </body>
