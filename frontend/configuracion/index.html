@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe6">
+  <title>Configuración | Obra Clara</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="inner-page">
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="../index.html" aria-label="Obra Clara, inicio">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>obra clara</span>
+      </a>
+      <div class="topbar-meta"></div>
+    </header>
+
+    <section class="page-hero">
+      <p class="eyebrow">05 / Ajustes del sistema</p>
+      <h1>Configuración general<br><em>y respaldos.</em></h1>
+      <p>Ajusta los parámetros predeterminados de la empresa y gestiona copias de seguridad completas de toda la base de datos.</p>
+    </section>
+
+    <section class="workspace">
+      <div style="display: grid; gap: 24px; max-width: 850px; margin: 0 auto;">
+        <!-- DATOS DE EMPRESA -->
+        <div class="form-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Identidad</p>
+              <h2>Datos de la empresa / constructora</h2>
+            </div>
+          </div>
+
+          <form id="config-company-form">
+            <div class="form-grid">
+              <div class="field wide">
+                <label for="cfg-name">Nombre de fantasía / Razón Social</label>
+                <input type="text" id="cfg-name" placeholder="Ej. Obra Clara Arquitectura & Construcciones">
+              </div>
+
+              <div class="field">
+                <label for="cfg-cuit">CUIT / Identificación Tributaria</label>
+                <input type="text" id="cfg-cuit" placeholder="30-11223344-5">
+              </div>
+
+              <div class="field">
+                <label for="cfg-phone">Teléfono de contacto</label>
+                <input type="tel" id="cfg-phone" placeholder="11 4455-6677">
+              </div>
+
+              <div class="field wide">
+                <label for="cfg-email">Correo para presupuestos</label>
+                <input type="email" id="cfg-email" placeholder="presupuestos@obraclara.com">
+              </div>
+
+              <div class="field wide">
+                <label for="cfg-address">Dirección / Localidad</label>
+                <input type="text" id="cfg-address" placeholder="Av. Libertador 2450, Piso 3">
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+              <button type="submit" class="btn-action-primary">Guardar datos de empresa</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- COPIA DE SEGURIDAD Y RESTAURACIÓN -->
+        <div class="form-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Seguridad de datos</p>
+              <h2>Copias de seguridad (Backup)</h2>
+            </div>
+          </div>
+
+          <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">
+            Exporta todos los clientes, arquitectos, presupuestos y usuarios a un archivo seguro en formato JSON para tener un resguardo o migrar a otra computadora.
+          </p>
+
+          <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="btn-action-primary" id="btn-export-backup">
+              📥 Descargar copia de seguridad (JSON)
+            </button>
+
+            <label class="btn-action-secondary" style="margin: 0; cursor: pointer;">
+              📤 Restaurar desde archivo JSON
+              <input type="file" id="input-import-backup" accept=".json" style="display: none;">
+            </label>
+          </div>
+
+          <div id="backup-feedback" style="margin-top: 16px; font-size: 13px; font-weight: 600; color: var(--green); display: none;"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>OBRA CLARA / CONFIGURACIÓN</span>
+      <span>Ajustes y resguardos</span>
+    </footer>
+  </main>
+
+  <script src="../auth.js"></script>
+  <script>
+    Auth.requireAdmin(1);
+    Auth.renderTopbar(1);
+
+    const CONFIG_KEY = 'obraClaraConfig';
+    const cfgForm = document.querySelector('#config-company-form');
+    const nameInput = document.querySelector('#cfg-name');
+    const cuitInput = document.querySelector('#cfg-cuit');
+    const phoneInput = document.querySelector('#cfg-phone');
+    const emailInput = document.querySelector('#cfg-email');
+    const addressInput = document.querySelector('#cfg-address');
+
+    // Load company config
+    const savedConfig = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+    nameInput.value = savedConfig.name || '';
+    cuitInput.value = savedConfig.cuit || '';
+    phoneInput.value = savedConfig.phone || '';
+    emailInput.value = savedConfig.email || '';
+    addressInput.value = savedConfig.address || '';
+
+    cfgForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const cfg = {
+        name: nameInput.value.trim(),
+        cuit: cuitInput.value.trim(),
+        phone: phoneInput.value.trim(),
+        email: emailInput.value.trim(),
+        address: addressInput.value.trim()
+      };
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+      alert('Configuración de empresa guardada correctamente.');
+    });
+
+    // Backup & Export
+    const feedback = document.querySelector('#backup-feedback');
+
+    document.querySelector('#btn-export-backup').addEventListener('click', () => {
+      const backupData = {
+        exportedAt: new Date().toISOString(),
+        directory: JSON.parse(localStorage.getItem('obraClaraDirectory') || '{"clients":[],"architects":[]}'),
+        budgets: JSON.parse(localStorage.getItem('obraClaraBudgets') || '[]'),
+        users: JSON.parse(localStorage.getItem('obraClaraUsers') || '[]'),
+        config: JSON.parse(localStorage.getItem('obraClaraConfig') || '{}')
+      };
+
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `obra-clara-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      feedback.textContent = '✓ Copia de seguridad generada y descargada exitosamente.';
+      feedback.style.display = 'block';
+    });
+
+    // Restore & Import
+    document.querySelector('#input-import-backup').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (data.directory) localStorage.setItem('obraClaraDirectory', JSON.stringify(data.directory));
+          if (data.budgets) localStorage.setItem('obraClaraBudgets', JSON.stringify(data.budgets));
+          if (data.users) localStorage.setItem('obraClaraUsers', JSON.stringify(data.users));
+          if (data.config) localStorage.setItem('obraClaraConfig', JSON.stringify(data.config));
+
+          alert('Copia de seguridad restaurada exitosamente. La página se recargará.');
+          window.location.reload();
+        } catch (err) {
+          alert('Error al leer el archivo JSON de copia de seguridad: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>

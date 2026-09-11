@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe6">
+  <title>Formulario de cliente | Obra Clara</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="inner-page client-page">
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="../index.html" aria-label="Obra Clara, inicio">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>obra clara</span>
+      </a>
+      <div class="topbar-meta"></div>
+      <a class="back-link" href="index.html">← Volver a clientes</a>
+    </header>
+
+    <section class="page-hero">
+      <p class="eyebrow">Directorio de clientes</p>
+      <h1 id="form-title"><em>Nuevo cliente.</em></h1>
+      <p id="form-desc">Ingresa los datos del comitente o titular para vincularlo a sus obras y presupuestos.</p>
+    </section>
+
+    <section class="workspace">
+      <div class="form-panel" style="max-width: 800px; margin: 0 auto;">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Ficha de cliente</p>
+            <h2 id="form-subtitle">Información general</h2>
+          </div>
+        </div>
+
+        <form id="client-form" class="directory-form">
+          <div class="form-grid">
+            <div class="field wide">
+              <label for="client-name">Nombre completo / Razón social *</label>
+              <input type="text" id="client-name" name="name" placeholder="Ej. Juan Pérez o Desarrollos Norte S.A." required autocomplete="name">
+            </div>
+
+            <div class="field">
+              <label for="client-cuil">CUIL / CUIT</label>
+              <input type="text" id="client-cuil" name="cuil" placeholder="20-12345678-3" inputmode="numeric" maxlength="13">
+            </div>
+
+            <div class="field">
+              <label for="client-phone">Teléfono de contacto</label>
+              <input type="tel" id="client-phone" name="phone" placeholder="Ej. 11 4444 5555" autocomplete="tel">
+            </div>
+
+            <div class="field wide">
+              <label for="client-email">Correo electrónico</label>
+              <input type="email" id="client-email" name="email" placeholder="cliente@correo.com" autocomplete="email">
+            </div>
+
+            <div class="field wide">
+              <label for="client-address">Dirección / Obra de referencia</label>
+              <input type="text" id="client-address" name="address" placeholder="Ej. Calle 14 Nº 250, Barrio Las Palmas">
+            </div>
+
+            <div class="field wide">
+              <label for="client-notes">Observaciones adicionales</label>
+              <input type="text" id="client-notes" name="notes" placeholder="Ej. Horario de contacto, facturación A o B...">
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line);">
+            <a href="index.html" class="btn-action-secondary" id="cancel-button">Cancelar / Volver</a>
+            <button type="submit" class="btn-action-primary" id="save-button">Guardar cliente</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>OBRA CLARA / CLIENTES</span>
+      <span>Directorio de obra</span>
+    </footer>
+  </main>
+
+  <script src="../auth.js"></script>
+  <script>
+    Auth.requireAuth(1);
+    Auth.renderTopbar(1);
+
+    const directory = JSON.parse(
+      localStorage.getItem('obraClaraDirectory') || '{"clients":[],"architects":[]}'
+    );
+
+    const form = document.querySelector('#client-form');
+    const formTitle = document.querySelector('#form-title');
+    const formSubtitle = document.querySelector('#form-subtitle');
+    const saveButton = document.querySelector('#save-button');
+    const nameInput = document.querySelector('#client-name');
+    const cuilInput = document.querySelector('#client-cuil');
+    const phoneInput = document.querySelector('#client-phone');
+    const emailInput = document.querySelector('#client-email');
+    const addressInput = document.querySelector('#client-address');
+    const notesInput = document.querySelector('#client-notes');
+
+    const params = new URLSearchParams(window.location.search);
+    const editIndex = params.has('edit') ? Number(params.get('edit')) : null;
+
+    function formatCuit(value = '') {
+      const digits = value.replace(/\D/g, '').slice(0, 11);
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 10) return `${digits.slice(0, 2)}-${digits.slice(2, 10)}${digits.length > 10 ? '-' + digits.slice(10) : ''}`;
+      return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
+    }
+
+    function capitalizeWords(value = '') {
+      return value.replace(/(^|[\s'-])([a-záéíóúüñ])/gi, (_, sep, l) => sep + l.toUpperCase());
+    }
+
+    cuilInput.addEventListener('input', e => {
+      e.target.value = formatCuit(e.target.value);
+    });
+
+    nameInput.addEventListener('blur', e => {
+      e.target.value = capitalizeWords(e.target.value.trim());
+    });
+
+    if (editIndex !== null && directory.clients[editIndex]) {
+      const client = directory.clients[editIndex];
+      formTitle.innerHTML = '<em>Modificar cliente.</em>';
+      formSubtitle.textContent = `Editando: ${client.name}`;
+      saveButton.textContent = 'Guardar cambios';
+
+      nameInput.value = client.name || '';
+      cuilInput.value = client.cuil || '';
+      phoneInput.value = client.phone || '';
+      emailInput.value = client.email || '';
+      addressInput.value = client.address || '';
+      notesInput.value = client.notes || '';
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+
+      const clientData = {
+        name: capitalizeWords(nameInput.value.trim()),
+        cuil: cuilInput.value.trim(),
+        phone: phoneInput.value.trim(),
+        email: emailInput.value.trim(),
+        address: addressInput.value.trim(),
+        notes: notesInput.value.trim()
+      };
+
+      if (editIndex !== null && directory.clients[editIndex]) {
+        directory.clients[editIndex] = clientData;
+      } else {
+        directory.clients.push(clientData);
+        // Set as active profile
+        const activeProfiles = JSON.parse(localStorage.getItem('obraClaraActiveProfiles') || '{}');
+        activeProfiles.client = directory.clients.length - 1;
+        localStorage.setItem('obraClaraActiveProfiles', JSON.stringify(activeProfiles));
+      }
+
+      localStorage.setItem('obraClaraDirectory', JSON.stringify(directory));
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe6">
+  <title>Iniciar Sesión | Obra Clara</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="inner-page">
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="../login/index.html" aria-label="Obra Clara">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>obra clara</span>
+      </a>
+      <div class="topbar-meta">
+        <span class="status-dot"></span>
+        <span>Control de acceso</span>
+      </div>
+    </header>
+
+    <div class="login-container">
+      <div class="login-card">
+        <p class="eyebrow">Acceso al sistema</p>
+        <h2>Iniciar sesión</h2>
+        <p class="subtitle">Ingresa tus credenciales para acceder a tus presupuestos y obras.</p>
+
+        <form id="login-form">
+          <div style="display: grid; gap: 18px;">
+            <div class="field">
+              <label for="input-username">Usuario o Correo electrónico</label>
+              <input type="text" id="input-username" name="username" placeholder="admin o usuario" required autocomplete="username" autofocus>
+            </div>
+
+            <div class="field">
+              <label for="input-password">Contraseña</label>
+              <input type="password" id="input-password" name="password" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+
+            <div id="login-error" style="color: #b45d43; font-size: 13px; font-weight: 600; display: none;"></div>
+
+            <button type="submit" class="btn-action-primary" style="width: 100%; justify-content: center; padding: 14px; font-size: 14px; margin-top: 6px;">
+              Ingresar a Obra Clara →
+            </button>
+          </div>
+        </form>
+
+        <div class="login-presets">
+          <p>Accesos directos de prueba:</p>
+          <div class="preset-buttons">
+            <button class="preset-btn" type="button" data-user="admin" data-pass="admin">
+              👑 Entrar como Administrador
+            </button>
+            <button class="preset-btn" type="button" data-user="usuario" data-pass="123">
+              👷 Entrar como Usuario Común
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <span>OBRA CLARA / AUTENTICACIÓN</span>
+      <span>Control y seguridad de obra</span>
+    </footer>
+  </main>
+
+  <script src="../auth.js"></script>
+  <script>
+    // If already logged in, redirect to home
+    if (Auth.getSession()) {
+      window.location.href = '../index.html';
+    }
+
+    const form = document.querySelector('#login-form');
+    const userInput = document.querySelector('#input-username');
+    const passInput = document.querySelector('#input-password');
+    const errorBox = document.querySelector('#login-error');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      errorBox.style.display = 'none';
+
+      try {
+        Auth.login(userInput.value, passInput.value);
+        window.location.href = '../index.html';
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.style.display = 'block';
+      }
+    });
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        userInput.value = btn.dataset.user;
+        passInput.value = btn.dataset.pass;
+        form.dispatchEvent(new Event('submit'));
+      });
+    });
+  </script>
+</body>
+</html>

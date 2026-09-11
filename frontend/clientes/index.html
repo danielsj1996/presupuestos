@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe6">
+  <title>Clientes | Obra Clara</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="inner-page client-page">
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="../index.html" aria-label="Obra Clara, inicio">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>obra clara</span>
+      </a>
+      <div class="topbar-meta"></div>
+      <a class="back-link" href="../index.html">← Volver al inicio</a>
+    </header>
+
+    <section class="page-hero">
+      <p class="eyebrow">01 / Directorio de obra</p>
+      <h1>Clientes que<br><em>dan contexto.</em></h1>
+      <p>Administra los titulares y comitentes de cada obra para reutilizar sus datos en cada presupuesto y documento.</p>
+    </section>
+
+    <section class="directory-page-actions">
+      <div class="page-action-header">
+        <div>
+          <p class="eyebrow">Directorio de clientes</p>
+          <h2>Clientes registrados</h2>
+        </div>
+        <a class="btn-action-primary" href="formulario.html" id="add-client-button">
+          <span>+</span> Agregar nuevo cliente
+        </a>
+      </div>
+
+      <div class="directory-bar">
+        <div>
+          <p class="eyebrow">Registros persistidos</p>
+          <strong id="client-count">0 clientes</strong>
+        </div>
+        <span class="directory-hint">Los datos guardados se reutilizan automáticamente al generar presupuestos.</span>
+      </div>
+    </section>
+
+    <section class="workspace" id="workspace">
+      <div class="history-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Búsqueda rápida</p>
+            <h2>Encontrar un cliente</h2>
+          </div>
+        </div>
+
+        <div class="search-wrapper">
+          <span class="search-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input
+            type="search"
+            id="client-search"
+            placeholder="Buscar por nombre, CUIL / CUIT, teléfono o correo..."
+            autocomplete="off"
+            aria-label="Buscar cliente en específico"
+          >
+        </div>
+
+        <div class="directory-list" id="client-list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>OBRA CLARA / CLIENTES</span>
+      <span>Datos reutilizables para cada obra</span>
+    </footer>
+  </main>
+
+  <script src="../auth.js"></script>
+  <script>
+    Auth.requireAuth(1);
+    Auth.renderTopbar(1);
+
+    const directory = JSON.parse(
+      localStorage.getItem('obraClaraDirectory') || '{"clients":[],"architects":[]}'
+    );
+
+    const clientList = document.querySelector('#client-list');
+    const clientSearch = document.querySelector('#client-search');
+    const clientCount = document.querySelector('#client-count');
+
+    function escapeHtml(value = '') {
+      return String(value).replace(/[&<>'"]/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[character]));
+    }
+
+    function saveDirectory() {
+      localStorage.setItem('obraClaraDirectory', JSON.stringify(directory));
+    }
+
+    function updateCount() {
+      const total = directory.clients.length;
+      clientCount.textContent = `${total} ${total === 1 ? 'cliente' : 'clientes'}`;
+    }
+
+    function renderClients() {
+      const search = clientSearch.value.trim().toLocaleLowerCase('es-AR');
+
+      const clients = directory.clients
+        .map((client, index) => ({ ...client, originalIndex: index }))
+        .filter(client => {
+          if (!search) return true;
+          const values = [client.name, client.cuil, client.phone, client.email, client.address];
+          return values.some(val => String(val || '').toLocaleLowerCase('es-AR').includes(search));
+        });
+
+      if (!clients.length) {
+        clientList.innerHTML = directory.clients.length
+          ? `<p class="directory-empty">No se encontraron clientes que coincidan con "${escapeHtml(clientSearch.value)}".</p>`
+          : `<div class="directory-empty"><p>Todavía no hay clientes registrados.</p><p style="margin-top: 14px;"><a class="btn-action-primary" href="formulario.html">+ Agregar el primer cliente</a></p></div>`;
+        updateCount();
+        return;
+      }
+
+      const activeProfiles = JSON.parse(localStorage.getItem('obraClaraActiveProfiles') || '{}');
+
+      clientList.innerHTML = clients.map(client => {
+        const index = client.originalIndex;
+        const isSelected = activeProfiles.client === index;
+        const additionalData = [
+          client.cuil ? `CUIL: ${escapeHtml(client.cuil)}` : null,
+          client.phone ? `Tel: ${escapeHtml(client.phone)}` : null,
+          client.email ? `${escapeHtml(client.email)}` : null,
+          client.address ? `Obra: ${escapeHtml(client.address)}` : null
+        ].filter(Boolean).join(' · ') || 'Sin datos de contacto';
+
+        return `
+          <article class="directory-result" style="${isSelected ? 'border-color: var(--green); background: rgba(40,91,78,0.04);' : ''}">
+            <div>
+              <strong>${escapeHtml(client.name || 'Cliente sin nombre')} ${isSelected ? '<span class="pill" style="margin-left: 8px; font-size: 10px; border-color: var(--green); color: var(--green);">Activo</span>' : ''}</strong>
+              <span>${additionalData}</span>
+            </div>
+            <div class="directory-result-actions">
+              <button type="button" data-action="use" data-index="${index}">${isSelected ? '✓ Seleccionado' : 'Usar en PDF'}</button>
+              <button type="button" data-action="edit" data-index="${index}">Modificar</button>
+              <button type="button" data-action="delete" data-index="${index}" data-profile-action="delete">Borrar</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      updateCount();
+    }
+
+    function useClient(index) {
+      const client = directory.clients[index];
+      if (!client) return;
+
+      const savedProfiles = JSON.parse(localStorage.getItem('obraClaraActiveProfiles') || '{}');
+      savedProfiles.client = index;
+      localStorage.setItem('obraClaraActiveProfiles', JSON.stringify(savedProfiles));
+
+      renderClients();
+    }
+
+    function editClient(index) {
+      window.location.href = `formulario.html?edit=${index}`;
+    }
+
+    function deleteClient(index) {
+      const client = directory.clients[index];
+      if (!client) return;
+
+      const confirmed = confirm(`¿Seguro que deseas borrar al cliente "${client.name}"?`);
+      if (!confirmed) return;
+
+      directory.clients.splice(index, 1);
+      saveDirectory();
+
+      const savedProfiles = JSON.parse(localStorage.getItem('obraClaraActiveProfiles') || '{}');
+      if (savedProfiles.client === index) {
+        delete savedProfiles.client;
+      } else if (savedProfiles.client > index) {
+        savedProfiles.client--;
+      }
+      localStorage.setItem('obraClaraActiveProfiles', JSON.stringify(savedProfiles));
+
+      renderClients();
+    }
+
+    clientList.addEventListener('click', event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+
+      const index = Number(button.dataset.index);
+      const action = button.dataset.action;
+
+      if (action === 'use') useClient(index);
+      if (action === 'edit') editClient(index);
+      if (action === 'delete') deleteClient(index);
+    });
+
+    clientSearch.addEventListener('input', renderClients);
+
+    renderClients();
+  </script>
+</body>
+</html>

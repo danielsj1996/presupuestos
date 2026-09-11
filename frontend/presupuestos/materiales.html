@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe6">
+  <title>Presupuestos de Materiales | Obra Clara</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="inner-page budget-page">
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="../index.html" aria-label="Obra Clara, inicio">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>obra clara</span>
+      </a>
+      <div class="topbar-meta"></div>
+      <a class="back-link" href="index.html">← Volver a presupuestos</a>
+    </header>
+
+    <section class="page-hero">
+      <p class="eyebrow">Presupuestos / Materiales</p>
+      <h1>Partidas de compra<br><em>y materiales.</em></h1>
+      <p>Listado de los presupuestos de materiales ya realizados. Consulta totales, fechas y genera nuevas cotizaciones.</p>
+    </section>
+
+    <section class="budget-page-actions">
+      <div class="page-action-header">
+        <div>
+          <p class="eyebrow">Historial de materiales</p>
+          <h2>Presupuestos realizados</h2>
+        </div>
+        <a class="btn-action-primary" href="formulario-materiales.html" id="btn-create-budget">
+          <span>+</span> Generar presupuesto de materiales
+        </a>
+      </div>
+
+      <div class="directory-bar">
+        <div>
+          <p class="eyebrow">Registros realizados</p>
+          <strong id="budget-count">0 presupuestos</strong>
+        </div>
+        <span class="directory-hint">Puedes ver la vista previa del PDF, modificar o eliminar presupuestos guardados.</span>
+      </div>
+    </section>
+
+    <section class="workspace" id="workspace">
+      <div class="history-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Búsqueda rápida</p>
+            <h2>Encontrar un presupuesto</h2>
+          </div>
+        </div>
+
+        <div class="search-wrapper">
+          <span class="search-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input
+            type="search"
+            id="budget-search"
+            placeholder="Buscar por nombre de obra, cliente, arquitecto o fecha..."
+            autocomplete="off"
+            aria-label="Buscar presupuesto en específico"
+          >
+        </div>
+
+        <div class="budget-cards-list" id="budget-list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>OBRA CLARA / MATERIALES</span>
+      <span>Control económico de compras</span>
+    </footer>
+  </main>
+
+  <script src="../auth.js"></script>
+  <script>
+    Auth.requireAuth(1);
+    Auth.renderTopbar(1);
+
+    const budgets = JSON.parse(localStorage.getItem('obraClaraBudgets') || '[]');
+    const budgetList = document.querySelector('#budget-list');
+    const budgetSearch = document.querySelector('#budget-search');
+    const budgetCount = document.querySelector('#budget-count');
+
+    const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+
+    function formatCurrency(val) {
+      return currency.format(val || 0).replace('\u00a0', ' ');
+    }
+
+    function formatDate(val) {
+      if (!val) return 'Sin fecha';
+      const parts = String(val).split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return val;
+    }
+
+    function escapeHtml(value = '') {
+      return String(value).replace(/[&<>'"]/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[character]));
+    }
+
+    function saveBudgets() {
+      localStorage.setItem('obraClaraBudgets', JSON.stringify(budgets));
+    }
+
+    function renderBudgets() {
+      const search = budgetSearch.value.trim().toLocaleLowerCase('es-AR');
+
+      const materialBudgets = budgets
+        .filter(b => b.type === 'materials')
+        .reverse()
+        .filter(b => {
+          if (!search) return true;
+          const searchTargets = [
+            b.project,
+            b.client?.name,
+            b.architect?.name,
+            b.period,
+            b.createdAt
+          ];
+          return searchTargets.some(val => String(val || '').toLocaleLowerCase('es-AR').includes(search));
+        });
+
+      const count = materialBudgets.length;
+      budgetCount.textContent = `${count} ${count === 1 ? 'presupuesto' : 'presupuestos'}`;
+
+      if (!materialBudgets.length) {
+        budgetList.innerHTML = budgets.some(b => b.type === 'materials')
+          ? `<p class="directory-empty">No se encontraron presupuestos que coincidan con "${escapeHtml(budgetSearch.value)}".</p>`
+          : `
+            <div class="directory-empty">
+              <p>Todavía no has generado ningún presupuesto de materiales.</p>
+              <p style="margin-top: 14px;">
+                <a class="btn-action-primary" href="formulario-materiales.html">+ Generar el primer presupuesto de materiales</a>
+              </p>
+            </div>
+          `;
+        return;
+      }
+
+      budgetList.innerHTML = materialBudgets.map(b => {
+        const linesCount = b.entries ? b.entries.length : 0;
+        const periodText = b.period || (b.createdAt ? `Creado el ${formatDate(b.createdAt)}` : 'Sin fecha');
+
+        return `
+          <article class="budget-card-item">
+            <div class="budget-card-info">
+              <h3>${escapeHtml(b.project || 'Obra sin nombre')}</h3>
+              <div class="budget-card-meta">
+                <span>Titular: <strong>${escapeHtml(b.client?.name || 'Sin titular')}</strong></span>
+                <span>·</span>
+                <span>Arquitecto: <strong>${escapeHtml(b.architect?.name || 'Sin arquitecto')}</strong></span>
+                <span>·</span>
+                <span>${escapeHtml(periodText)}</span>
+                <span>·</span>
+                <span>${linesCount} ${linesCount === 1 ? 'partida' : 'partidas'}</span>
+              </div>
+            </div>
+
+            <div class="budget-card-actions">
+              <div class="budget-card-total">${formatCurrency(b.total)}</div>
+              <div class="budget-btn-group">
+                <button type="button" data-action="view" data-id="${b.id}">Ver PDF</button>
+                <button type="button" data-action="edit" data-id="${b.id}">Modificar</button>
+                <button type="button" data-action="delete" data-id="${b.id}" class="btn-delete">Borrar</button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function showPdfModal(b) {
+      const modal = document.createElement('div');
+      modal.className = 'preview-modal';
+
+      const rowsHtml = (b.entries || []).map(e => `
+        <tr>
+          <td><strong>${escapeHtml(e.description)}</strong></td>
+          <td>${escapeHtml(e.category || 'Material')}</td>
+          <td>${e.quantity} ${escapeHtml(e.unit || 'ud')}</td>
+          <td><span class="pill ${e.status === 'Cotizado' ? '' : 'pending'}">${escapeHtml(e.status || 'Cotizado')}</span></td>
+          <td>${formatCurrency(e.quantity * e.price)}</td>
+        </tr>
+      `).join('');
+
+      modal.innerHTML = `
+        <div class="preview-dialog" role="dialog" aria-modal="true">
+          <div class="preview-toolbar">
+            <div>
+              <p class="eyebrow">Documento generado</p>
+              <h2>${escapeHtml(b.project || 'Presupuesto')}</h2>
+            </div>
+            <button class="preview-close" type="button" data-close aria-label="Cerrar">×</button>
+          </div>
+
+          <div class="preview-sheet">
+            <div class="print-letterhead" style="display: block;">
+              <div class="print-letterhead-top">
+                <span>OBRA CLARA · MATERIALES</span>
+                <strong>${escapeHtml(b.period || '')}</strong>
+              </div>
+              <div class="print-letterhead-title">
+                <span>Obra</span>
+                <h3>${escapeHtml(b.project || 'Nombre de la obra')}</h3>
+                <p>Cliente: ${escapeHtml(b.client?.name || 'Sin titular')} ${b.client?.cuil ? `· CUIL: ${escapeHtml(b.client.cuil)}` : ''}</p>
+              </div>
+              <div class="print-architect">
+                <div class="print-architect-name">
+                  <span class="print-label">Arquitecto/a</span>
+                  <strong>${escapeHtml(b.architect?.name || 'Sin informar')}</strong>
+                </div>
+                <div class="print-professional-data">
+                  <div><span class="print-label">CUIL</span><span>${escapeHtml(b.architect?.cuil || 'Sin informar')}</span></div>
+                  <div><span class="print-label">Teléfono</span><span>${escapeHtml(b.architect?.phone || 'Sin informar')}</span></div>
+                  <div><span class="print-label">Mail</span><span>${escapeHtml(b.architect?.email || 'Sin informar')}</span></div>
+                  <div><span class="print-label">Matrícula</span><span>${escapeHtml(b.architect?.license || 'Sin informar')}</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="entries" style="margin-top: 24px;">
+              <div class="entries-head">
+                <h3>Partidas de compra</h3>
+                <span class="total">${(b.entries || []).length} partidas</span>
+              </div>
+              <table class="entry-table">
+                <thead>
+                  <tr><th>Concepto</th><th>Categoría</th><th>Cantidad</th><th>Estado</th><th>Importe</th></tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+              <div class="summary-bar">
+                <span>Moneda: ARS · pesos argentinos</span>
+                <span>Total estimado <strong>${formatCurrency(b.total)}</strong></span>
+              </div>
+            </div>
+
+            <div class="print-document-footer">
+              <span>Obra Clara · Documento emitido</span>
+              <span>Página 1</span>
+            </div>
+          </div>
+
+          <div class="preview-footer">
+            <span>Presupuesto registrado en Obra Clara.</span>
+            <button class="btn-action-primary" type="button" data-print>Imprimir / Guardar PDF</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      modal.querySelector('[data-close]').addEventListener('click', () => modal.remove());
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+      modal.querySelector('[data-print]').addEventListener('click', () => window.print());
+    }
+
+    budgetList.addEventListener('click', event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+
+      const id = button.dataset.id;
+      const action = button.dataset.action;
+      const b = budgets.find(item => item.id === id);
+
+      if (action === 'view' && b) {
+        showPdfModal(b);
+      } else if (action === 'edit' && b) {
+        window.location.href = `formulario-materiales.html?edit=${id}`;
+      } else if (action === 'delete' && b) {
+        const confirmed = confirm(`¿Seguro que deseas borrar el presupuesto de "${b.project}"?`);
+        if (confirmed) {
+          const idx = budgets.findIndex(item => item.id === id);
+          if (idx >= 0) {
+            budgets.splice(idx, 1);
+            saveBudgets();
+            renderBudgets();
+          }
+        }
+      }
+    });
+
+    budgetSearch.addEventListener('input', renderBudgets);
+
+    renderBudgets();
+  </script>
+</body>
+</html>

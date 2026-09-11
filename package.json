@@ -1,0 +1,11 @@
+{
+  "name": "obra-clara",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix backend install",
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js"
+  }
+}

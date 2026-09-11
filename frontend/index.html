@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5efe6">
-  <title>Obra Clara | Presupuestos</title>
+  <title>Obra Clara | Control y Presupuestos de Obra</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -13,83 +13,44 @@
 <body>
   <main class="shell">
     <header class="topbar">
-      <a class="brand" href="#inicio" aria-label="Obra Clara, inicio">
+      <a class="brand" href="index.html" aria-label="Obra Clara, inicio">
         <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
         <span>obra clara</span>
       </a>
-      <div class="topbar-meta">
-        <span class="status-dot"></span>
-        <span>Control de obra</span>
-      </div>
+      <div class="topbar-meta"></div>
     </header>
 
     <section class="hero" id="inicio">
       <div class="hero-copy">
         <p class="eyebrow">Panel de presupuestos <span>2026</span></p>
         <h1>Que cada peso<br><em>tenga su sitio.</em></h1>
-        <p class="hero-text">Organiza compras, trabajos y gastos de la obra con una vista clara desde el primer ladrillo hasta el cierre de la semana.</p>
+        <p class="hero-text">Organiza compras, insumos, profesionales y mano de obra con una vista clara desde el primer ladrillo hasta el cierre de la semana.</p>
       </div>
       <div class="hero-note" aria-label="Resumen del panel">
         <span class="note-line"></span>
-        <p>Tres espacios.<br><strong>Una obra bajo control.</strong></p>
+        <p id="hero-spaces-text">Tres espacios.<br><strong>Una obra bajo control.</strong></p>
       </div>
     </section>
 
     <section class="choice-section" aria-labelledby="choice-title">
       <div class="section-heading">
         <div>
-            <p class="eyebrow">Panel principal</p>
-            <h2 id="choice-title">Elige una sección para comenzar</h2>
+          <p class="eyebrow">Panel principal</p>
+          <h2 id="choice-title">Elige una sección para comenzar</h2>
         </div>
-        <span class="section-index">01 / 03</span>
+        <span class="section-index" id="choice-index-text">01 / 03</span>
       </div>
 
-      <div class="choice-grid home-choice-grid">
-        <a class="choice-card client-card" href="clientes.html">
-          <span class="card-number">01</span>
-          <span class="card-icon person-icon" aria-hidden="true">⌂</span>
-          <span class="card-content">
-            <strong>Clientes</strong>
-            <small>Agrega y busca los datos de los titulares de cada obra.</small>
-          </span>
-          <span class="card-arrow" aria-hidden="true">↗</span>
-          <span class="card-footer">Titulares · CUIL / CUIT · contacto</span>
-        </a>
-
-        <a class="choice-card architect-card" href="arquitectos.html">
-          <span class="card-number">02</span>
-          <span class="card-icon person-icon" aria-hidden="true">⌁</span>
-          <span class="card-content">
-            <strong>Arquitectos</strong>
-            <small>Guarda profesionales y reutiliza sus datos en cada PDF.</small>
-          </span>
-          <span class="card-arrow" aria-hidden="true">↗</span>
-          <span class="card-footer">Matrícula · CUIL · contacto</span>
-        </a>
-        <a class="choice-card budget-card" href="presupuestos.html">
-          <span class="card-number">03</span>
-          <span class="card-icon budget-icon" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="card-content">
-            <strong>Generar<br>presupuestos</strong>
-            <small>Elige entre materiales o jornales y gastos semanales.</small>
-          </span>
-          <span class="card-arrow" aria-hidden="true">↗</span>
-          <span class="card-footer">Materiales · jornales · PDF</span>
-        </a>
+      <div class="choice-grid home-choice-grid" id="main-cards-container" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+        <!-- Tarjetas dinámicas inyectadas según rol por auth.js -->
       </div>
-      <div class="directory-bar">
+
+      <div class="directory-bar" style="margin-top: 24px;">
         <div>
           <p class="eyebrow">Acceso rápido</p>
           <strong>Los datos guardados se reutilizan en cada presupuesto</strong>
         </div>
-        <span class="directory-hint">Clientes y arquitectos quedan disponibles al generar el PDF.</span>
-      </div>
-    </section>
-
-    <section class="workspace" id="workspace" aria-live="polite">
-      <div class="workspace-empty">
-        <span class="empty-mark">+</span>
-        <p>Selecciona una opción para abrir tu presupuesto</p>
+        <span class="directory-hint">Clientes, arquitectos y presupuestos quedan sincronizados y disponibles.</span>
       </div>
     </section>
 
@@ -98,6 +59,92 @@
       <span>Hecho para ver el coste real a tiempo</span>
     </footer>
   </main>
-  <script src="app.js"></script>
+
+  <script src="auth.js"></script>
+  <script>
+    const session = Auth.requireAuth(0);
+    Auth.renderTopbar(0);
+
+    const container = document.querySelector('#main-cards-container');
+    const indexText = document.querySelector('#choice-index-text');
+    const heroSpaces = document.querySelector('#hero-spaces-text');
+
+    const isAdmin = session && session.role === 'ADMINISTRADOR';
+
+    const clientCard = `
+      <a class="choice-card client-card" href="clientes/index.html">
+        <span class="card-number">01</span>
+        <span class="card-icon person-icon" aria-hidden="true">⌂</span>
+        <span class="card-content">
+          <strong>Clientes</strong>
+          <small>Consulta el listado de comitentes o agrega nuevos titulares de obra.</small>
+        </span>
+        <span class="card-arrow" aria-hidden="true">↗</span>
+        <span class="card-footer">Listado · Búsqueda 🔍 · Nuevo cliente</span>
+      </a>
+    `;
+
+    const architectCard = `
+      <a class="choice-card architect-card" href="arquitectos/index.html">
+        <span class="card-number">02</span>
+        <span class="card-icon person-icon" aria-hidden="true">⌁</span>
+        <span class="card-content">
+          <strong>Arquitectos</strong>
+          <small>Directorio de profesionales, matrículas y datos de contacto.</small>
+        </span>
+        <span class="card-arrow" aria-hidden="true">↗</span>
+        <span class="card-footer">Listado · Búsqueda 🔍 · Nuevo profesional</span>
+      </a>
+    `;
+
+    const budgetCard = `
+      <a class="choice-card budget-card" href="presupuestos/index.html">
+        <span class="card-number">03</span>
+        <span class="card-icon budget-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="card-content">
+          <strong>Presupuestos</strong>
+          <small>Historial y confección de cotizaciones de materiales o jornales.</small>
+        </span>
+        <span class="card-arrow" aria-hidden="true">↗</span>
+        <span class="card-footer">Materiales · Jornales · PDF listo</span>
+      </a>
+    `;
+
+    const usersCard = `
+      <a class="choice-card" href="usuarios/index.html" style="background: linear-gradient(180deg, #f7f9f7 0%, #e8efe8 100%);">
+        <span class="card-number">04</span>
+        <span class="card-icon" aria-hidden="true" style="font-size: 22px; color: var(--green);">👥</span>
+        <span class="card-content">
+          <strong>Usuarios</strong>
+          <small>Gestión de cuentas, roles de administrador y operadores.</small>
+        </span>
+        <span class="card-arrow" aria-hidden="true">↗</span>
+        <span class="card-footer">Accesos · Roles · Permisos</span>
+      </a>
+    `;
+
+    const configCard = `
+      <a class="choice-card" href="configuracion/index.html" style="background: linear-gradient(180deg, #fdfbf7 0%, #f4ede2 100%);">
+        <span class="card-number">05</span>
+        <span class="card-icon" aria-hidden="true" style="font-size: 22px; color: #a4523c;">⚙️</span>
+        <span class="card-content">
+          <strong>Configuración</strong>
+          <small>Datos de empresa constructora y respaldos completos (backup JSON).</small>
+        </span>
+        <span class="card-arrow" aria-hidden="true">↗</span>
+        <span class="card-footer">Empresa · Copia de seguridad · Restaurar</span>
+      </a>
+    `;
+
+    if (isAdmin) {
+      container.innerHTML = clientCard + architectCard + budgetCard + usersCard + configCard;
+      indexText.textContent = '01 / 05';
+      heroSpaces.innerHTML = 'Cinco espacios.<br><strong>Control administrativo total.</strong>';
+    } else {
+      container.innerHTML = clientCard + architectCard + budgetCard;
+      indexText.textContent = '01 / 03';
+      heroSpaces.innerHTML = 'Tres espacios.<br><strong>Una obra bajo control.</strong>';
+    }
+  </script>
 </body>
 </html>

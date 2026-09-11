@@ -8,7 +8,11 @@ import { fileURLToPath } from 'node:url';
 const { Pool } = pg;
 const app = express();
 const port = Number(process.env.PORT || 3000);
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const isRemoteDb = Boolean(process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost'));
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: isRemoteDb ? { rejectUnauthorized: false } : false
+});
 const backendDirectory = path.dirname(fileURLToPath(import.meta.url));
 const frontendDirectory = path.join(backendDirectory, '..', 'frontend');
 

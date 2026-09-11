@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe6">
+  <title>Gestión de Usuarios | Obra Clara</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="inner-page">
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="../index.html" aria-label="Obra Clara, inicio">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>obra clara</span>
+      </a>
+      <div class="topbar-meta"></div>
+    </header>
+
+    <section class="page-hero">
+      <p class="eyebrow">04 / Administración del sistema</p>
+      <h1>Gestión de usuarios<br><em>y permisos.</em></h1>
+      <p>Administra los usuarios autorizados para operar la plataforma y asigna roles de Administrador o Usuario Común.</p>
+    </section>
+
+    <section class="directory-page-actions">
+      <div class="page-action-header">
+        <div>
+          <p class="eyebrow">Directorio de accesos</p>
+          <h2>Usuarios registrados</h2>
+        </div>
+        <button class="btn-action-primary" type="button" id="btn-new-user">
+          <span>+</span> Agregar nuevo usuario
+        </button>
+      </div>
+
+      <div class="directory-bar">
+        <div>
+          <p class="eyebrow">Cuentas activas</p>
+          <strong id="users-count">0 usuarios</strong>
+        </div>
+        <span class="directory-hint">Los Administradores tienen acceso a Usuarios y Configuración; los Usuarios Comunes solo a Clientes, Arquitectos y Presupuestos.</span>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="history-panel">
+        <div style="overflow-x: auto;">
+          <table class="catalog-table" id="users-table">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Nombre completo</th>
+                <th>Correo electrónico</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th style="text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="users-list"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL NUEVO/EDITAR USUARIO -->
+    <div class="form-modal-backdrop" id="user-modal" style="display: none;">
+      <div class="form-modal-card">
+        <div class="panel-header" style="margin-bottom: 20px;">
+          <div>
+            <p class="eyebrow">Ficha de usuario</p>
+            <h2 id="modal-title">Nuevo usuario</h2>
+          </div>
+          <button class="preview-close" type="button" id="modal-close">×</button>
+        </div>
+
+        <form id="user-form">
+          <input type="hidden" id="form-user-id">
+          <div style="display: grid; gap: 14px;">
+            <div class="field">
+              <label for="form-username">Nombre de usuario *</label>
+              <input type="text" id="form-username" placeholder="Ej. jperez" required>
+            </div>
+
+            <div class="field">
+              <label for="form-name">Nombre completo *</label>
+              <input type="text" id="form-name" placeholder="Ej. Juan Pérez" required>
+            </div>
+
+            <div class="field">
+              <label for="form-email">Correo electrónico</label>
+              <input type="email" id="form-email" placeholder="jperez@obra.com">
+            </div>
+
+            <div class="field">
+              <label for="form-role">Rol y permisos *</label>
+              <select id="form-role" required>
+                <option value="USUARIO COMÚN">USUARIO COMÚN (Clientes, Arquitectos, Presupuestos)</option>
+                <option value="ADMINISTRADOR">ADMINISTRADOR (Acceso Total + Usuarios y Configuración)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="form-password">Contraseña *</label>
+              <input type="password" id="form-password" placeholder="Contraseña de acceso" required>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px;">
+              <button type="button" class="btn-action-secondary" id="modal-cancel">Cancelar</button>
+              <button type="submit" class="btn-action-primary" id="modal-save">Guardar usuario</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <span>OBRA CLARA / ADMINISTRACIÓN</span>
+      <span>Gestión de credenciales</span>
+    </footer>
+  </main>
+
+  <script src="../auth.js"></script>
+  <script>
+    const session = Auth.requireAdmin(1);
+    Auth.renderTopbar(1);
+
+    const usersList = document.querySelector('#users-list');
+    const usersCount = document.querySelector('#users-count');
+
+    const modal = document.querySelector('#user-modal');
+    const modalClose = document.querySelector('#modal-close');
+    const modalCancel = document.querySelector('#modal-cancel');
+    const modalTitle = document.querySelector('#modal-title');
+    const userForm = document.querySelector('#user-form');
+
+    const idInput = document.querySelector('#form-user-id');
+    const usernameInput = document.querySelector('#form-username');
+    const nameInput = document.querySelector('#form-name');
+    const emailInput = document.querySelector('#form-email');
+    const roleSelect = document.querySelector('#form-role');
+    const passInput = document.querySelector('#form-password');
+
+    function escapeHtml(val = '') {
+      return String(val).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+    }
+
+    function renderUsers() {
+      const users = Auth.getUsers();
+      usersCount.textContent = `${users.length} ${users.length === 1 ? 'usuario' : 'usuarios'}`;
+
+      usersList.innerHTML = users.map(u => {
+        const isAdmin = u.role === 'ADMINISTRADOR';
+        const isCurrent = session.username === u.username;
+        const badge = isAdmin
+          ? '<span class="user-badge role-admin">ADMINISTRADOR</span>'
+          : '<span class="user-badge role-user">USUARIO COMÚN</span>';
+
+        return `
+          <tr>
+            <td><strong>${escapeHtml(u.username)}</strong> ${isCurrent ? '<small style="color:var(--green);">(Tú)</small>' : ''}</td>
+            <td>${escapeHtml(u.name)}</td>
+            <td>${escapeHtml(u.email || 'Sin correo')}</td>
+            <td>${badge}</td>
+            <td><span class="pill ${u.active ? '' : 'pending'}">${u.active ? 'Activo' : 'Inactivo'}</span></td>
+            <td style="text-align: right;">
+              <div class="directory-result-actions" style="justify-content: flex-end;">
+                <button type="button" data-action="edit" data-id="${u.id}">Modificar</button>
+                ${!isCurrent ? `<button type="button" data-action="delete" data-id="${u.id}" data-profile-action="delete">Borrar</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    document.querySelector('#btn-new-user').addEventListener('click', () => {
+      idInput.value = '';
+      usernameInput.value = '';
+      nameInput.value = '';
+      emailInput.value = '';
+      roleSelect.value = 'USUARIO COMÚN';
+      passInput.value = '';
+      modalTitle.textContent = 'Nuevo usuario';
+      modal.style.display = 'grid';
+    });
+
+    modalClose.addEventListener('click', () => { modal.style.display = 'none'; });
+    modalCancel.addEventListener('click', () => { modal.style.display = 'none'; });
+
+    userForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const users = Auth.getUsers();
+      const id = idInput.value;
+
+      if (id) {
+        // Edit
+        const user = users.find(u => u.id === id);
+        if (user) {
+          user.username = usernameInput.value.trim();
+          user.name = nameInput.value.trim();
+          user.email = emailInput.value.trim();
+          user.role = roleSelect.value;
+          if (passInput.value.trim()) {
+            user.password = passInput.value.trim();
+          }
+        }
+      } else {
+        // Create
+        const username = usernameInput.value.trim().toLowerCase();
+        if (users.some(u => u.username.toLowerCase() === username)) {
+          alert('Ya existe un usuario con ese nombre de usuario.');
+          return;
+        }
+
+        users.push({
+          id: `usr-${Date.now()}`,
+          username: username,
+          name: nameInput.value.trim(),
+          email: emailInput.value.trim(),
+          role: roleSelect.value,
+          password: passInput.value.trim() || '123456',
+          active: true,
+          createdAt: new Date().toISOString().slice(0, 10)
+        });
+      }
+
+      Auth.saveUsers(users);
+      modal.style.display = 'none';
+      renderUsers();
+    });
+
+    usersList.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      const users = Auth.getUsers();
+      const user = users.find(u => u.id === id);
+      if (!user) return;
+
+      if (action === 'edit') {
+        idInput.value = user.id;
+        usernameInput.value = user.username;
+        nameInput.value = user.name;
+        emailInput.value = user.email || '';
+        roleSelect.value = user.role;
+        passInput.value = '';
+        passInput.placeholder = 'Dejar en blanco para no cambiar';
+        modalTitle.textContent = `Modificar: ${user.username}`;
+        modal.style.display = 'grid';
+      } else if (action === 'delete') {
+        if (users.filter(u => u.role === 'ADMINISTRADOR').length <= 1 && user.role === 'ADMINISTRADOR') {
+          alert('No puedes eliminar al único administrador del sistema.');
+          return;
+        }
+        if (confirm(`¿Seguro que deseas eliminar al usuario "${user.username}"?`)) {
+          const idx = users.findIndex(u => u.id === id);
+          if (idx >= 0) {
+            users.splice(idx, 1);
+            Auth.saveUsers(users);
+            renderUsers();
+          }
+        }
+      }
+    });
+
+    renderUsers();
+  </script>
+</body>
+</html>

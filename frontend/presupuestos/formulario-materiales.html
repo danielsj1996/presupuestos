@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe6">
+  <title>Generar Presupuesto de Materiales | Obra Clara</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="inner-page budget-page">
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="../index.html" aria-label="Obra Clara, inicio">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>obra clara</span>
+      </a>
+      <div class="topbar-meta"></div>
+      <a class="back-link" href="materiales.html">← Volver a presupuestos de materiales</a>
+    </header>
+
+    <section class="page-hero">
+      <p class="eyebrow">Confección de presupuesto</p>
+      <h1 id="page-title">Nuevo presupuesto<br><em>de materiales.</em></h1>
+      <p id="page-desc">Define el titular, profesional responsable y carga las partidas de compras para emitir el presupuesto.</p>
+    </section>
+
+    <section class="workspace" id="workspace">
+      <div class="form-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Membrete y partidas</p>
+            <h2>Planilla de compras y materiales</h2>
+            <span class="currency-label">ARS · pesos argentinos</span>
+          </div>
+
+          <div class="panel-actions">
+            <button class="preview-panel" type="button" id="btn-preview" disabled>Vista previa PDF</button>
+            <button class="save-panel" type="button" id="btn-save" disabled>Guardar presupuesto</button>
+            <button class="print-panel" type="button" id="btn-print" disabled>Descargar / Imprimir</button>
+          </div>
+        </div>
+
+        <!-- MEMBRETE -->
+        <div class="letterhead-form">
+          <div class="form-block-title">Datos del membrete del PDF</div>
+          <div class="form-grid letterhead-grid">
+            <div class="field">
+              <label for="select-client">Cliente registrado *</label>
+              <select id="select-client" required>
+                <option value="">Elegir cliente...</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="select-architect">Arquitecto registrado *</label>
+              <select id="select-architect" required>
+                <option value="">Elegir arquitecto...</option>
+              </select>
+            </div>
+
+            <div class="field wide">
+              <label for="input-project">Nombre de la obra *</label>
+              <input type="text" id="input-project" placeholder="Ej. Vivienda Unifamiliar · Etapa Estructura" required>
+            </div>
+
+            <div class="field">
+              <label for="input-date">Fecha de emisión</label>
+              <input type="date" id="input-date">
+            </div>
+
+            <div class="profile-selection-note" id="profile-requirement-note">
+              Completa el nombre de la obra y selecciona un cliente y un arquitecto.
+            </div>
+          </div>
+        </div>
+
+        <!-- FORMULARIO DE LÍNEA -->
+        <form class="line-form" id="entry-form" style="margin-top: 24px;">
+          <div class="form-block-title" style="margin-bottom: 12px;">Añadir partida de compra</div>
+
+          <div style="margin-bottom: 16px;">
+            <label for="quick-catalog" style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: .08em; display: block; margin-bottom: 4px;">
+              ⚡ Autocompletar desde el catálogo de materiales (opcional)
+            </label>
+            <select id="quick-catalog" style="width: 100%; max-width: 420px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 3px; font-size: 13px; background: var(--white);">
+              <option value="">Seleccionar insumo del catálogo...</option>
+            </select>
+          </div>
+
+          <div class="form-grid">
+            <div class="field wide">
+              <label for="line-description">Concepto / Insumo *</label>
+              <input type="text" id="line-description" placeholder="Ej. Cemento gris 25 kg" required>
+            </div>
+
+            <div class="field">
+              <label for="line-category">Categoría</label>
+              <select id="line-category">
+                <option value="Material">Material</option>
+                <option value="Áridos">Áridos</option>
+                <option value="Hierros">Hierros</option>
+                <option value="Herramienta">Herramienta</option>
+                <option value="Transporte">Transporte / Flete</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="line-quantity">Cantidad *</label>
+              <input type="number" id="line-quantity" min="0.01" step="0.01" placeholder="0" required>
+            </div>
+
+            <div class="field">
+              <label for="line-unit">Unidad *</label>
+              <input type="text" id="line-unit" placeholder="bolsas / m³ / kg" required>
+            </div>
+
+            <div class="field">
+              <label for="line-price">Precio unitario ($ ARS) *</label>
+              <input type="number" id="line-price" min="0" step="0.01" placeholder="0.00" required>
+            </div>
+
+            <div class="field">
+              <label for="line-status">Estado</label>
+              <select id="line-status">
+                <option value="Cotizado">Cotizado</option>
+                <option value="Estimado">Estimado</option>
+                <option value="Pendiente">Pendiente</option>
+              </select>
+            </div>
+
+            <button class="add-row" type="submit" id="btn-add-line">+ Añadir partida</button>
+          </div>
+        </form>
+
+        <!-- TABLA DE PARTIDAS -->
+        <div class="entries" style="margin-top: 28px;">
+          <div class="entries-head">
+            <h3>Partidas presupuestadas</h3>
+            <span class="total" id="entries-count">0 líneas</span>
+          </div>
+
+          <table class="entry-table">
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th>Categoría</th>
+                <th>Cantidad</th>
+                <th>Estado</th>
+                <th>Precio Unit.</th>
+                <th>Subtotal</th>
+                <th style="text-align: right;">Quitar</th>
+              </tr>
+            </thead>
+            <tbody id="entries-rows"></tbody>
+          </table>
+
+          <div class="summary-bar">
+            <span>Moneda: ARS · pesos argentinos</span>
+            <span>Total estimado: <strong id="entries-total" style="font-size: 20px; color: var(--green);">$ 0,00</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>OBRA CLARA / PRESUPUESTOS</span>
+      <span>Documento listo para impresión</span>
+    </footer>
+  </main>
+
+  <script src="../auth.js"></script>
+  <script>
+    Auth.requireAuth(1);
+    Auth.renderTopbar(1);
+
+    const directory = JSON.parse(localStorage.getItem('obraClaraDirectory') || '{"clients":[],"architects":[]}');
+    const catalog = JSON.parse(localStorage.getItem('obraClaraMaterials') || '[]');
+    const budgets = JSON.parse(localStorage.getItem('obraClaraBudgets') || '[]');
+    const activeProfiles = JSON.parse(localStorage.getItem('obraClaraActiveProfiles') || '{}');
+
+    const params = new URLSearchParams(window.location.search);
+    const editingId = params.get('edit');
+
+    const selectClient = document.querySelector('#select-client');
+    const selectArchitect = document.querySelector('#select-architect');
+    const inputProject = document.querySelector('#input-project');
+    const inputDate = document.querySelector('#input-date');
+    const quickCatalog = document.querySelector('#quick-catalog');
+
+    const descInput = document.querySelector('#line-description');
+    const catSelect = document.querySelector('#line-category');
+    const qtyInput = document.querySelector('#line-quantity');
+    const unitInput = document.querySelector('#line-unit');
+    const priceInput = document.querySelector('#line-price');
+    const statusSelect = document.querySelector('#line-status');
+
+    const rowsTbody = document.querySelector('#entries-rows');
+    const entriesCount = document.querySelector('#entries-count');
+    const entriesTotal = document.querySelector('#entries-total');
+
+    const btnSave = document.querySelector('#btn-save');
+    const btnPreview = document.querySelector('#btn-preview');
+    const btnPrint = document.querySelector('#btn-print');
+    const noteRequirement = document.querySelector('#profile-requirement-note');
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    inputDate.value = todayStr;
+
+    let entries = [
+      { description: 'Cemento gris 25 kg', category: 'Material', quantity: 20, unit: 'bolsas', price: 7400, status: 'Cotizado' },
+      { description: 'Arena de río', category: 'Áridos', quantity: 2, unit: 'm³', price: 31000, status: 'Estimado' }
+    ];
+
+    const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+    function formatCurrency(val) {
+      return currency.format(val || 0).replace('\u00a0', ' ');
+    }
+    function formatDate(val) {
+      if (!val) return 'Sin fecha';
+      const p = String(val).split('-');
+      return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : val;
+    }
+    function escapeHtml(val = '') {
+      return String(val).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+    }
+
+    // Populate clients & architects
+    directory.clients.forEach((c, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = c.name;
+      selectClient.appendChild(opt);
+    });
+
+    directory.architects.forEach((a, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = a.name + (a.license ? ` (${a.license})` : '');
+      selectArchitect.appendChild(opt);
+    });
+
+    // Populate catalog quick selector
+    catalog.forEach((item, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = `${item.description} - ${formatCurrency(item.price)} / ${item.unit}`;
+      quickCatalog.appendChild(opt);
+    });
+
+    quickCatalog.addEventListener('change', e => {
+      const idx = e.target.value;
+      if (idx !== '') {
+        const item = catalog[Number(idx)];
+        if (item) {
+          descInput.value = item.description;
+          catSelect.value = item.category || 'Material';
+          unitInput.value = item.unit || 'ud';
+          priceInput.value = item.price || 0;
+          statusSelect.value = item.status || 'Cotizado';
+        }
+      }
+    });
+
+    // If editing existing budget
+    if (editingId) {
+      const existing = budgets.find(b => b.id === editingId);
+      if (existing) {
+        document.querySelector('#page-title').innerHTML = '<em>Modificar presupuesto</em><br>de materiales.';
+        inputProject.value = existing.project || '';
+        if (existing.createdAt) inputDate.value = existing.createdAt;
+
+        const cIdx = directory.clients.findIndex(c => c.name === existing.client?.name);
+        if (cIdx >= 0) selectClient.value = cIdx;
+
+        const aIdx = directory.architects.findIndex(a => a.name === existing.architect?.name);
+        if (aIdx >= 0) selectArchitect.value = aIdx;
+
+        if (existing.entries && existing.entries.length) {
+          entries = existing.entries.map(e => ({ ...e }));
+        }
+      }
+    } else {
+      // Default active profile selection
+      if (activeProfiles.client !== undefined && directory.clients[activeProfiles.client]) {
+        selectClient.value = activeProfiles.client;
+      }
+      if (activeProfiles.architect !== undefined && directory.architects[activeProfiles.architect]) {
+        selectArchitect.value = activeProfiles.architect;
+      }
+    }
+
+    function checkValidity() {
+      const valid = Boolean(selectClient.value !== '' && selectArchitect.value !== '' && inputProject.value.trim());
+      btnSave.disabled = !valid || entries.length === 0;
+      btnPreview.disabled = !valid;
+      btnPrint.disabled = !valid;
+
+      if (valid) {
+        noteRequirement.textContent = 'Obra, titular y profesional seleccionados. Ya puedes guardar o imprimir.';
+        noteRequirement.style.color = 'var(--green)';
+      } else {
+        noteRequirement.textContent = 'Completa el nombre de la obra y selecciona un cliente y un arquitecto.';
+        noteRequirement.style.color = 'var(--muted)';
+      }
+    }
+
+    selectClient.addEventListener('change', checkValidity);
+    selectArchitect.addEventListener('change', checkValidity);
+    inputProject.addEventListener('input', checkValidity);
+
+    function renderRows() {
+      const total = entries.reduce((sum, e) => sum + (e.quantity * e.price), 0);
+      entriesCount.textContent = `${entries.length} ${entries.length === 1 ? 'partida' : 'partidas'}`;
+      entriesTotal.textContent = formatCurrency(total);
+
+      if (!entries.length) {
+        rowsTbody.innerHTML = '<tr><td colspan="7" class="table-empty">Todavía no has añadido ninguna partida de compra.</td></tr>';
+        checkValidity();
+        return;
+      }
+
+      rowsTbody.innerHTML = entries.map((e, index) => `
+        <tr>
+          <td><strong>${escapeHtml(e.description)}</strong></td>
+          <td>${escapeHtml(e.category)}</td>
+          <td>${e.quantity} ${escapeHtml(e.unit)}</td>
+          <td><span class="pill ${e.status === 'Cotizado' ? '' : 'pending'}">${escapeHtml(e.status)}</span></td>
+          <td>${formatCurrency(e.price)}</td>
+          <td><strong style="color: var(--green);">${formatCurrency(e.quantity * e.price)}</strong></td>
+          <td style="text-align: right;">
+            <button type="button" data-delete-row="${index}" style="border:none; background:none; color:#a4523c; font-weight:700; cursor:pointer; font-size:16px;">×</button>
+          </td>
+        </tr>
+      `).join('');
+
+      rowsTbody.querySelectorAll('[data-delete-row]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          entries.splice(Number(btn.dataset.deleteRow), 1);
+          renderRows();
+        });
+      });
+
+      checkValidity();
+    }
+
+    document.querySelector('#entry-form').addEventListener('submit', e => {
+      e.preventDefault();
+      entries.push({
+        description: descInput.value.trim(),
+        category: catSelect.value,
+        quantity: Number(qtyInput.value) || 1,
+        unit: unitInput.value.trim(),
+        price: Number(priceInput.value) || 0,
+        status: statusSelect.value
+      });
+
+      descInput.value = '';
+      qtyInput.value = '';
+      priceInput.value = '';
+      quickCatalog.value = '';
+      descInput.focus();
+
+      renderRows();
+    });
+
+    function getRecord() {
+      const client = directory.clients[Number(selectClient.value)];
+      const architect = directory.architects[Number(selectArchitect.value)];
+      const total = entries.reduce((sum, e) => sum + (e.quantity * e.price), 0);
+
+      return {
+        id: editingId || (crypto.randomUUID ? crypto.randomUUID() : `mat-${Date.now()}`),
+        type: 'materials',
+        project: inputProject.value.trim(),
+        client: client ? { ...client } : null,
+        architect: architect ? { ...architect } : null,
+        period: `Impreso el ${formatDate(inputDate.value || todayStr)}`,
+        entries: entries.map(e => ({ ...e })),
+        total: total,
+        createdAt: inputDate.value || todayStr
+      };
+    }
+
+    btnSave.addEventListener('click', () => {
+      const record = getRecord();
+      const existingIdx = budgets.findIndex(b => b.id === record.id);
+      if (existingIdx >= 0) {
+        budgets[existingIdx] = record;
+      } else {
+        budgets.push(record);
+      }
+      localStorage.setItem('obraClaraBudgets', JSON.stringify(budgets));
+      window.location.href = 'materiales.html';
+    });
+
+    function showPdfPreview() {
+      const record = getRecord();
+      const rowsHtml = record.entries.map(e => `
+        <tr>
+          <td><strong>${escapeHtml(e.description)}</strong></td>
+          <td>${escapeHtml(e.category)}</td>
+          <td>${e.quantity} ${escapeHtml(e.unit)}</td>
+          <td><span class="pill ${e.status === 'Cotizado' ? '' : 'pending'}">${escapeHtml(e.status)}</span></td>
+          <td>${formatCurrency(e.quantity * e.price)}</td>
+        </tr>
+      `).join('');
+
+      const modal = document.createElement('div');
+      modal.className = 'preview-modal';
+      modal.innerHTML = `
+        <div class="preview-dialog" role="dialog" aria-modal="true">
+          <div class="preview-toolbar">
+            <div>
+              <p class="eyebrow">Vista previa del presupuesto</p>
+              <h2>${escapeHtml(record.project || 'Presupuesto')}</h2>
+            </div>
+            <button class="preview-close" type="button" data-close>×</button>
+          </div>
+
+          <div class="preview-sheet">
+            <div class="print-letterhead" style="display: block;">
+              <div class="print-letterhead-top">
+                <span>OBRA CLARA · MATERIALES</span>
+                <strong>${escapeHtml(record.period)}</strong>
+              </div>
+              <div class="print-letterhead-title">
+                <span>Obra</span>
+                <h3>${escapeHtml(record.project)}</h3>
+                <p>Cliente: ${escapeHtml(record.client?.name || '')} ${record.client?.cuil ? `· CUIL: ${escapeHtml(record.client.cuil)}` : ''}</p>
+              </div>
+              <div class="print-architect">
+                <div class="print-architect-name">
+                  <span class="print-label">Arquitecto/a</span>
+                  <strong>${escapeHtml(record.architect?.name || '')}</strong>
+                </div>
+                <div class="print-professional-data">
+                  <div><span class="print-label">CUIL</span><span>${escapeHtml(record.architect?.cuil || 'Sin informar')}</span></div>
+                  <div><span class="print-label">Teléfono</span><span>${escapeHtml(record.architect?.phone || 'Sin informar')}</span></div>
+                  <div><span class="print-label">Mail</span><span>${escapeHtml(record.architect?.email || 'Sin informar')}</span></div>
+                  <div><span class="print-label">Matrícula</span><span>${escapeHtml(record.architect?.license || 'Sin informar')}</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="entries" style="margin-top: 24px;">
+              <div class="entries-head">
+                <h3>Partidas de compra</h3>
+                <span class="total">${record.entries.length} partidas</span>
+              </div>
+              <table class="entry-table">
+                <thead><tr><th>Concepto</th><th>Categoría</th><th>Cantidad</th><th>Estado</th><th>Importe</th></tr></thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+              <div class="summary-bar">
+                <span>Moneda: ARS · pesos argentinos</span>
+                <span>Total estimado <strong>${formatCurrency(record.total)}</strong></span>
+              </div>
+            </div>
+
+            <div class="print-document-footer">
+              <span>Obra Clara · Documento emitido</span>
+              <span>Página 1</span>
+            </div>
+          </div>
+
+          <div class="preview-footer">
+            <span>Revisa los datos antes de imprimir.</span>
+            <button class="btn-action-primary" type="button" data-print>Imprimir / Guardar PDF</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      modal.querySelector('[data-close]').addEventListener('click', () => modal.remove());
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+      modal.querySelector('[data-print]').addEventListener('click', () => window.print());
+    }
+
+    btnPreview.addEventListener('click', showPdfPreview);
+    btnPrint.addEventListener('click', () => window.print());
+
+    renderRows();
+  </script>
+</body>
+</html>
